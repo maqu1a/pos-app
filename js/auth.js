@@ -1,10 +1,16 @@
 // ============================================================
 //  ログイン / アカウント作成
 // ============================================================
-import { sb, errMessage } from "./db.js";
+import { sb, errMessage, hashErrorMessage } from "./db.js";
 import { $, setBusy, toast } from "./ui.js";
 
 function showError(id, message) {
+  const el = $(id);
+  el.textContent = message;
+  el.hidden = !message;
+}
+
+function showOk(id, message) {
   const el = $(id);
   el.textContent = message;
   el.hidden = !message;
@@ -17,11 +23,33 @@ function showPanel(which) {
   showError("#login-error", "");
   showError("#signup-error", "");
   $("#signup-ok").hidden = true;
+  $("#login-ok").hidden = true;
 }
 
 export function initAuth() {
   $("#to-signup").addEventListener("click", () => showPanel("signup"));
   $("#to-login").addEventListener("click", () => showPanel("login"));
+
+  // 確認メールのリンクが期限切れ等だった場合、その理由をログイン画面に出す
+  const linkError = hashErrorMessage();
+  if (linkError) {
+    showError("#login-error", linkError);
+    history.replaceState(null, "", location.pathname + location.search);
+  }
+
+  // ---- 確認メールの再送 ----
+  $("#resend-btn").addEventListener("click", async () => {
+    const email = $("#login-email").value.trim();
+    $("#login-ok").hidden = true;
+    if (!email) return showError("#login-error", "メールアドレスを入力してから押してください");
+
+    showError("#login-error", "");
+    setBusy($("#resend-btn"), true, "送信中…");
+    const { error } = await sb.auth.resend({ type: "signup", email });
+    setBusy($("#resend-btn"), false);
+    if (error) return showError("#login-error", errMessage(error));
+    showOk("#login-ok", "確認メールを送り直しました。メール内のリンクを開いてください。");
+  });
 
   // ---- ログイン ----
   $("#login-form").addEventListener("submit", async (e) => {

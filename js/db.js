@@ -5,7 +5,9 @@ export const configured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
 export const sb = configured
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
+      // detectSessionInUrl: 確認メールのリンクから戻ってきたとき、URLに付いてくる
+      // アクセストークンを拾ってそのままログイン状態にする
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
     })
   : null;
 
@@ -19,5 +21,20 @@ export function errMessage(error) {
   if (/Unable to validate email address/i.test(m)) return "メールアドレスの形式が正しくありません";
   if (/Email not confirmed/i.test(m)) return "メールアドレスの確認が完了していません";
   if (/Failed to fetch|NetworkError/i.test(m)) return "通信できませんでした。ネット接続を確認してください";
+  if (/For security purposes|only request this after/i.test(m)) return "続けて送信できません。1分ほど待ってからもう一度お試しください";
   return m;
+}
+
+// 確認メールのリンクから戻ってきたときにURLへ付く #error=... を日本語にする
+export function hashErrorMessage() {
+  const raw = (typeof location !== "undefined" && location.hash) || "";
+  if (!raw.includes("error")) return "";
+  const p = new URLSearchParams(raw.slice(1));
+  const code = p.get("error_code") || "";
+  const desc = p.get("error_description") || p.get("error") || "";
+  if (!code && !desc) return "";
+  if (/otp_expired|access_denied/i.test(code + desc)) {
+    return "確認リンクの有効期限が切れているか、すでに使用済みです。下の「確認メールを再送する」からやり直してください。";
+  }
+  return desc.replace(/\+/g, " ");
 }

@@ -33,6 +33,7 @@ function makeMockSupabase() {
       user = { id: uid(), email }; emit("SIGNED_IN"); return { data: { session: { user } }, error: null };
     },
     async signOut(opts) { auth._lastSignOutOpts = opts; user = null; emit("SIGNED_OUT"); return { error: null }; },
+    async resend(opts) { auth._lastResend = opts; return { data: {}, error: null }; },
     async getSession() { return { data: { session: user ? { user } : null } }; },
     onAuthStateChange(cb) { listeners.push(cb); cb("INITIAL_SESSION", user ? { user } : null); return { data: { subscription: { unsubscribe() {} } } }; },
   };
@@ -164,6 +165,18 @@ submit("#login-form");
 await tick();
 eq($("#login-error").textContent, "メールアドレスまたはパスワードが違います", "誤パスワードでエラー表示");
 ok(!$("#app-view").hidden === false, "ログインしていないのでアプリは開かない");
+
+// 確認メールの再送
+$("#login-email").value = "";
+click("#resend-btn");
+await tick();
+eq($("#login-error").textContent, "メールアドレスを入力してから押してください", "宛先未入力なら再送しない");
+type("#login-email", "shop@example.com");
+click("#resend-btn");
+await tick(20);
+eq(mock._auth._lastResend?.type, "signup", "確認メールの再送を依頼できる");
+eq(mock._auth._lastResend?.email, "shop@example.com", "入力したアドレス宛に再送");
+ok(!$("#login-ok").hidden, "再送しましたと表示される");
 
 // アカウント作成 → 自動ログイン
 click("#to-signup");
