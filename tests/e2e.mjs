@@ -29,6 +29,7 @@ function makeMockSupabase() {
   const meta = {};   // email -> user_metadata（登録時のショップ名など）
   const auth = {
     async signUp({ email, options }) {
+      auth._lastSignUpOptions = options;
       meta[email] = { ...(options?.data || {}) };
       // Confirm email がONのプロジェクトを再現するモード
       if (auth._suppressSession) return { data: { session: null, user: { id: uid(), email } }, error: null };
@@ -245,7 +246,17 @@ ok($("#login-panel").hidden && $("#signup-panel").hidden, "他のパネルは隠
 ok($("#to-signup").hidden, "案内中は右下のリンクを出さない");
 click("#verify-resend");
 await tick(20);
+eq(
+  mock._auth._lastSignUpOptions?.emailRedirectTo,
+  "https://example.github.io/pos-app/",
+  "確認メールの戻り先にアプリ自身のURLを指定している（Site URL設定に依存しない）"
+);
 eq(mock._auth._lastResend?.email, "later@example.com", "案内画面から再送できる");
+eq(
+  mock._auth._lastResend?.options?.emailRedirectTo,
+  "https://example.github.io/pos-app/",
+  "再送でも戻り先を明示している"
+);
 ok(!$("#verify-ok").hidden, "再送しましたと表示");
 click("#verify-to-login");
 await tick();

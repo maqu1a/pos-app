@@ -29,13 +29,21 @@ function showPanel(which) {
   $("#verify-ok").hidden = true;
 }
 
+// 確認メールのリンクから戻ってくる先。
+// Supabase の Site URL 設定に依存せず、いま開いているアプリのURLを必ず使う。
+const appUrl = () => location.origin + location.pathname;
+
 // 確認メールを送り直す（送信先アドレスと表示先を指定）
 async function resend(email, button, errorId, okId) {
   if (!email) return showError(errorId, "メールアドレスを入力してから押してください");
   showError(errorId, "");
   $(okId).hidden = true;
   setBusy(button, true, "送信中…");
-  const { error } = await sb.auth.resend({ type: "signup", email });
+  const { error } = await sb.auth.resend({
+    type: "signup",
+    email,
+    options: { emailRedirectTo: appUrl() },
+  });
   setBusy(button, false);
   if (error) return showError(errorId, errMessage(error));
   showOk(okId, "確認メールを送り直しました。新しいメールのリンクを開いてください。");
@@ -97,7 +105,7 @@ export function initAuth() {
     const { data, error } = await sb.auth.signUp({
       email,
       password,
-      options: { data: { shop_name: shopName } },
+      options: { data: { shop_name: shopName }, emailRedirectTo: appUrl() },
     });
     setBusy($("#signup-submit"), false);
     if (error) return showError("#signup-error", errMessage(error));
