@@ -139,7 +139,7 @@ global.Event = window.Event;
 // config.js にダミー値を差し込んだコピーを使う（本体は書き換えない）
 mkdirSync(`${SCRATCH}/appcopy/js`, { recursive: true });
 writeFileSync(`${SCRATCH}/appcopy/package.json`, `{"type":"module"}`);
-for (const f of ["app.js", "auth.js", "db.js", "products.js", "register.js", "report.js", "store.js", "ui.js"]) {
+for (const f of ["app.js", "auth.js", "db.js", "products.js", "register.js", "report.js", "store.js", "ui.js", "version.js"]) {
   writeFileSync(`${SCRATCH}/appcopy/js/${f}`, readFileSync(`${APP}/js/${f}`, "utf8"));
 }
 writeFileSync(
@@ -221,6 +221,7 @@ eq($("#shop-name").textContent, "カフェほろ", "ヘッダーにショップ�
 ok($("#dash-lead").textContent.startsWith("カフェほろ"), "ダッシュボードにショップ名");
 ok(window.document.title.includes("カフェほろ"), "タブのタイトルにもショップ名");
 eq($("#today-amount").textContent, "¥0", "本日の売上は0円");
+ok($("#app-version").textContent !== "—" && $("#app-version").textContent.length > 3, `バージョン表示: ${$("#app-version").textContent}`);
 ok($("#back-btn").hidden, "ダッシュボードでは戻るボタンなし");
 
 /* ------------------------------------------------------------

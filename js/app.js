@@ -10,6 +10,7 @@ import { initProducts, renderProducts, refreshProducts } from "./products.js";
 import { initRegister, enterRegister, render as renderRegister } from "./register.js";
 import { initReport, enterReport, resetReport } from "./report.js";
 import { SHOP_NAME } from "./config.js";
+import { APP_VERSION } from "./version.js";
 
 const SCREENS = {
   dashboard: { title: "ダッシュボード", back: false },
@@ -114,6 +115,8 @@ function boot() {
     $("#setup-notice").hidden = false;
     return;
   }
+
+  $("#app-version").textContent = APP_VERSION;
 
   initAuth();
   initProducts();
