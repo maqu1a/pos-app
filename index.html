@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d9488">
+<title>KaikeiPOS — かんたんレジ</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+<!-- ============ 未設定のときの案内 ============ -->
+<div id="setup-notice" class="setup-notice" hidden>
+  <h1>接続設定がまだです</h1>
+  <p><code>js/config.js</code> に Supabase の <b>Project URL</b> と <b>anon public キー</b> を貼り付けてください。</p>
+  <p class="muted">手順は同梱の <code>README.md</code> を参照。</p>
+</div>
+
+<!-- ============ ログイン / アカウント作成 ============ -->
+<div id="auth-view" class="auth-view" hidden>
+  <div class="auth-center">
+
+    <!-- ログイン（画面中央） -->
+    <section id="login-panel" class="card auth-card">
+      <div class="brand">
+        <span class="brand-mark">🧾</span>
+        <h1>KaikeiPOS</h1>
+        <p class="muted">ログインしてレジを開く</p>
+      </div>
+      <form id="login-form" novalidate>
+        <label>メールアドレス
+          <input type="email" id="login-email" autocomplete="username" inputmode="email" required>
+        </label>
+        <label>パスワード
+          <input type="password" id="login-password" autocomplete="current-password" required>
+        </label>
+        <p class="form-error" id="login-error" hidden></p>
+        <button type="submit" class="btn primary block" id="login-submit">ログイン</button>
+      </form>
+    </section>
+
+    <!-- アカウント作成 -->
+    <section id="signup-panel" class="card auth-card" hidden>
+      <div class="brand">
+        <span class="brand-mark">🧾</span>
+        <h1>アカウント作成</h1>
+        <p class="muted">商品と売上はこのアカウントに保存されます</p>
+      </div>
+      <form id="signup-form" novalidate>
+        <label>メールアドレス
+          <input type="email" id="signup-email" autocomplete="username" inputmode="email" required>
+        </label>
+        <label>パスワード（6文字以上）
+          <input type="password" id="signup-password" autocomplete="new-password" minlength="6" required>
+        </label>
+        <label>パスワード（確認）
+          <input type="password" id="signup-password2" autocomplete="new-password" minlength="6" required>
+        </label>
+        <p class="form-error" id="signup-error" hidden></p>
+        <p class="form-ok" id="signup-ok" hidden></p>
+        <button type="submit" class="btn primary block" id="signup-submit">この内容で登録する</button>
+        <button type="button" class="btn ghost block" id="to-login">← ログインに戻る</button>
+      </form>
+    </section>
+
+  </div>
+
+  <!-- 右下：アカウント作成へ -->
+  <button type="button" id="to-signup" class="corner-link">アカウント作成 →</button>
+</div>
+
+<!-- ============ アプリ本体 ============ -->
+<div id="app-view" hidden>
+  <header class="appbar">
+    <button type="button" id="back-btn" class="iconbtn" hidden aria-label="ダッシュボードに戻る">←</button>
+    <h1 id="screen-title">ダッシュボード</h1>
+    <div class="appbar-right">
+      <span id="user-email" class="user-email"></span>
+      <button type="button" id="logout-btn" class="btn tiny ghost">ログアウト</button>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ---------- ダッシュボード ---------- -->
+    <section id="screen-dashboard" class="screen">
+      <p class="lead" id="dash-lead">今日の売上をチェックしてから始めましょう。</p>
+
+      <div class="today-strip">
+        <div class="stat"><span class="stat-label">本日の売上</span><b id="today-amount">¥0</b></div>
+        <div class="stat"><span class="stat-label">会計数</span><b id="today-count">0</b></div>
+        <div class="stat"><span class="stat-label">点数</span><b id="today-qty">0</b></div>
+      </div>
+
+      <nav class="menu-grid">
+        <button type="button" class="menu-card" data-goto="products">
+          <span class="menu-icon">📦</span>
+          <span class="menu-title">商品登録</span>
+          <span class="menu-desc">商品名・金額・原価を登録</span>
+        </button>
+        <button type="button" class="menu-card accent" data-goto="register">
+          <span class="menu-icon">🧮</span>
+          <span class="menu-title">レジ</span>
+          <span class="menu-desc">商品をタップして会計</span>
+        </button>
+        <button type="button" class="menu-card" data-goto="report">
+          <span class="menu-icon">📈</span>
+          <span class="menu-title">販売レポート</span>
+          <span class="menu-desc">年 / 月 / 日別の売上・粗利</span>
+        </button>
+      </nav>
+    </section>
+
+    <!-- ---------- 商品登録 ---------- -->
+    <section id="screen-products" class="screen" hidden>
+      <form id="product-form" class="card">
+        <h2>新しい商品を登録</h2>
+        <label>商品名 <span class="req">必須</span>
+          <input type="text" id="product-name" maxlength="60" required>
+        </label>
+        <div class="row2">
+          <label>金額（税込） <span class="req">必須</span>
+            <input type="text" id="product-price" inputmode="numeric" placeholder="500" required>
+          </label>
+          <label>原価 <span class="opt">任意</span>
+            <input type="text" id="product-cost" inputmode="numeric" placeholder="未設定でOK">
+          </label>
+        </div>
+        <p class="hint">原価を入れておくと、販売レポートで粗利が見られます。</p>
+        <p class="form-error" id="product-error" hidden></p>
+        <button type="submit" class="btn primary block" id="product-submit">登録する</button>
+      </form>
+
+      <div class="list-head">
+        <h2>登録済みの商品 <span id="product-count" class="badge">0</span></h2>
+      </div>
+      <div id="product-list" class="product-list"></div>
+      <p id="product-empty" class="empty" hidden>まだ商品がありません。上のフォームから登録してください。</p>
+    </section>
+
+    <!-- ---------- レジ ---------- -->
+    <section id="screen-register" class="screen register" hidden>
+      <div class="register-items">
+        <div id="reg-product-grid" class="reg-grid"></div>
+        <p id="reg-empty" class="empty" hidden>商品が未登録です。先に「商品登録」から登録してください。</p>
+      </div>
+
+      <aside class="register-panel card">
+        <h2>会計</h2>
+        <div id="cart-list" class="cart-list"></div>
+        <p id="cart-empty" class="empty small">商品をタップしてください。</p>
+
+        <dl class="totals">
+          <div><dt>合計点数</dt><dd><span id="cart-qty">0</span> 点</dd></div>
+          <div class="big"><dt>合計金額</dt><dd id="cart-total">¥0</dd></div>
+        </dl>
+
+        <label class="received-label">お預かり
+          <input type="text" id="received" inputmode="numeric" placeholder="0">
+        </label>
+        <div class="quick-cash">
+          <button type="button" class="btn tiny" data-cash="exact">ちょうど</button>
+          <button type="button" class="btn tiny" data-cash="1000">1,000</button>
+          <button type="button" class="btn tiny" data-cash="5000">5,000</button>
+          <button type="button" class="btn tiny" data-cash="10000">10,000</button>
+        </div>
+        <dl class="totals change-box">
+          <div class="big"><dt>おつり</dt><dd id="change">¥0</dd></div>
+        </dl>
+        <p class="form-error" id="reg-error" hidden></p>
+
+        <button type="button" class="btn primary block big-btn" id="checkout-btn" disabled>会計する</button>
+        <button type="button" class="btn ghost block" id="clear-cart-btn" disabled>取り消し（全クリア）</button>
+      </aside>
+
+      <!-- 会計完了 -->
+      <div id="done-overlay" class="overlay" hidden>
+        <div class="card done-card">
+          <span class="done-mark">✓</span>
+          <h2>会計が完了しました</h2>
+          <dl class="done-list">
+            <div><dt>会計番号</dt><dd id="done-receipt">—</dd></div>
+            <div><dt>日付</dt><dd id="done-date">—</dd></div>
+            <div><dt>合計</dt><dd id="done-total">—</dd></div>
+            <div class="big"><dt>おつり</dt><dd id="done-change">—</dd></div>
+          </dl>
+          <button type="button" class="btn primary block" id="done-close">次の会計へ</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- 販売レポート ---------- -->
+    <section id="screen-report" class="screen" hidden>
+      <div class="card">
+        <div class="seg" role="tablist">
+          <button type="button" class="seg-btn is-on" data-mode="year">年</button>
+          <button type="button" class="seg-btn" data-mode="month">月</button>
+          <button type="button" class="seg-btn" data-mode="day">日</button>
+        </div>
+        <div class="period-controls">
+          <label id="ctl-year">年
+            <select id="report-year"></select>
+          </label>
+          <label id="ctl-month" hidden>月
+            <select id="report-month"></select>
+          </label>
+          <label id="ctl-day" hidden>日付
+            <input type="date" id="report-date">
+          </label>
+          <button type="button" class="btn" id="report-reload">更新</button>
+        </div>
+        <p class="period-label" id="report-period">—</p>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi"><span>売上</span><b id="kpi-sales">¥0</b></div>
+        <div class="kpi"><span>原価</span><b id="kpi-cost">¥0</b></div>
+        <div class="kpi accent"><span>粗利</span><b id="kpi-profit">¥0</b><small id="kpi-margin"></small></div>
+        <div class="kpi"><span>会計数</span><b id="kpi-count">0</b></div>
+        <div class="kpi"><span>販売点数</span><b id="kpi-qty">0</b></div>
+      </div>
+      <p class="hint" id="cost-note" hidden>※ 原価が未設定の商品は原価0で計算しています。</p>
+
+      <section class="card" id="breakdown-card" hidden>
+        <h2 id="breakdown-title">内訳</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th id="breakdown-head">期間</th><th class="r">売上</th><th class="r">粗利</th><th class="r">会計数</th></tr></thead>
+            <tbody id="breakdown-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>商品別</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>商品名</th><th class="r">単価</th><th class="r">点数</th><th class="r">売上</th><th class="r">粗利</th></tr></thead>
+            <tbody id="byproduct-body"></tbody>
+          </table>
+        </div>
+        <p id="report-empty" class="empty" hidden>この期間の販売データはありません。</p>
+      </section>
+
+      <section class="card">
+        <h2>会計履歴</h2>
+        <div id="sales-log" class="sales-log"></div>
+      </section>
+    </section>
+
+  </main>
+</div>
+
+<div id="toast" class="toast"></div>
+<div id="loading" class="loading" hidden><span class="spinner"></span></div>
+
+<script src="./vendor/supabase.js"></script>
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>

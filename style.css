@@ -1,0 +1,296 @@
+/* ============================================================
+   KaikeiPOS — スマホ / タブレット優先のスタイル
+   ============================================================ */
+:root {
+  --bg: #f5f7f8;
+  --surface: #ffffff;
+  --ink: #16211f;
+  --ink-soft: #5c6b69;
+  --line: #e2e8e7;
+  --brand: #0d9488;
+  --brand-dark: #0f766e;
+  --brand-soft: #e6f5f3;
+  --danger: #d1495b;
+  --warn: #b45309;
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(16, 33, 31, .06), 0 6px 20px rgba(16, 33, 31, .06);
+  --tap: 48px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+h1, h2, h3 { line-height: 1.35; margin: 0 0 .5em; }
+h1 { font-size: 1.25rem; }
+h2 { font-size: 1.05rem; }
+p { margin: 0 0 .8em; }
+.muted { color: var(--ink-soft); font-size: .9rem; }
+.hint { color: var(--ink-soft); font-size: .82rem; }
+.empty { color: var(--ink-soft); font-size: .9rem; text-align: center; padding: 1.2em .5em; }
+.empty.small { padding: .6em; }
+.r { text-align: right; }
+
+/* ---------- ボタン / 入力 ---------- */
+.btn {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  min-height: var(--tap);
+  padding: 0 1.1em;
+  border-radius: 11px;
+  cursor: pointer;
+  transition: transform .06s ease, background .15s ease, opacity .15s ease;
+}
+.btn:active { transform: scale(.985); }
+.btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.btn.primary:active { background: var(--brand-dark); }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--ink-soft); }
+.btn.block { display: block; width: 100%; margin-top: .6em; }
+.btn.tiny { min-height: 36px; padding: 0 .8em; font-size: .85rem; border-radius: 9px; }
+.btn.big-btn { min-height: 58px; font-size: 1.1rem; }
+.btn:disabled { opacity: .45; cursor: default; }
+
+label { display: block; font-size: .85rem; font-weight: 600; color: var(--ink-soft); margin-bottom: .85em; }
+input[type="text"], input[type="email"], input[type="password"], input[type="date"], select {
+  display: block;
+  width: 100%;
+  margin-top: .35em;
+  min-height: var(--tap);
+  padding: .5em .7em;
+  font: inherit;
+  font-weight: 400;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+}
+input:focus, select:focus { outline: 2px solid var(--brand); outline-offset: 1px; border-color: var(--brand); }
+.req { color: var(--danger); font-size: .72rem; margin-left: .3em; }
+.opt { color: var(--ink-soft); font-size: .72rem; margin-left: .3em; font-weight: 400; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: .7em; }
+.form-error, .form-ok { font-size: .85rem; font-weight: 600; margin: 0 0 .6em; }
+.form-error { color: var(--danger); }
+.form-ok { color: var(--brand-dark); }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.1em;
+  margin-bottom: 1em;
+}
+
+/* ---------- 未設定案内 ---------- */
+.setup-notice { max-width: 620px; margin: 3em auto; padding: 1.4em; background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); }
+code { background: #eef2f1; padding: .1em .4em; border-radius: 5px; font-size: .9em; }
+
+/* ---------- ログイン画面 ---------- */
+.auth-view { min-height: 100vh; min-height: 100dvh; position: relative; }
+.auth-center { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 1.2em; }
+.auth-card { width: 100%; max-width: 380px; margin: 0; padding: 1.5em 1.3em; }
+.brand { text-align: center; margin-bottom: 1.3em; }
+.brand-mark { font-size: 2rem; display: block; }
+.brand h1 { margin: .2em 0 .1em; letter-spacing: .02em; }
+.brand p { margin: 0; }
+.corner-link {
+  position: fixed;
+  right: max(1em, env(safe-area-inset-right));
+  bottom: max(1.2em, env(safe-area-inset-bottom));
+  background: transparent;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--brand-dark);
+  font: inherit;
+  font-size: .88rem;
+  font-weight: 700;
+  min-height: 44px;
+  padding: 0 1em;
+  border-radius: 22px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+/* ---------- アプリバー ---------- */
+.appbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: .5em;
+  padding: .6em .8em; padding-top: max(.6em, env(safe-area-inset-top));
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.appbar h1 { margin: 0; font-size: 1.05rem; flex: 1; }
+.appbar-right { display: flex; align-items: center; gap: .5em; }
+.user-email { font-size: .75rem; color: var(--ink-soft); max-width: 32vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.iconbtn {
+  border: none; background: transparent; font-size: 1.3rem; line-height: 1;
+  width: 40px; height: 40px; border-radius: 10px; cursor: pointer; color: var(--ink);
+}
+.iconbtn:active { background: #eef2f1; }
+
+main { max-width: 1100px; margin: 0 auto; padding: 1em .8em 3em; }
+.lead { color: var(--ink-soft); font-size: .92rem; }
+
+/* ---------- ダッシュボード ---------- */
+.today-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6em; margin-bottom: 1.2em; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: .7em .8em; }
+.stat-label { display: block; font-size: .74rem; color: var(--ink-soft); }
+.stat b { font-size: 1.15rem; }
+
+.menu-grid { display: grid; gap: .8em; }
+.menu-card {
+  display: block; text-align: left; width: 100%;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 1.1em; font: inherit; color: inherit; cursor: pointer;
+  transition: transform .06s ease;
+}
+.menu-card:active { transform: scale(.99); }
+.menu-card.accent { border-color: var(--brand); background: var(--brand-soft); }
+.menu-icon { font-size: 1.6rem; display: block; }
+.menu-title { display: block; font-size: 1.1rem; font-weight: 700; margin-top: .15em; }
+.menu-desc { display: block; font-size: .85rem; color: var(--ink-soft); }
+
+/* ---------- 商品一覧 ---------- */
+.list-head { display: flex; align-items: baseline; justify-content: space-between; }
+.badge { display: inline-block; background: #eef2f1; color: var(--ink-soft); font-size: .78rem; padding: .05em .55em; border-radius: 20px; }
+.product-list { display: grid; gap: .5em; }
+.product-row {
+  display: flex; align-items: center; gap: .7em;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: .7em .85em;
+}
+.product-row .pname { font-weight: 600; flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.product-row .pprice { font-weight: 700; white-space: nowrap; }
+.product-row .pcost { display: block; font-size: .74rem; color: var(--ink-soft); font-weight: 400; }
+.del-btn { border: none; background: transparent; color: var(--ink-soft); font-size: 1.1rem; width: 38px; height: 38px; border-radius: 9px; cursor: pointer; }
+.del-btn:active { background: #fdecee; color: var(--danger); }
+
+/* ---------- レジ ---------- */
+.reg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: .6em; margin-bottom: 1em; }
+.reg-item {
+  display: flex; flex-direction: column; justify-content: space-between; gap: .3em;
+  min-height: 84px; text-align: left; padding: .8em;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  font: inherit; color: inherit; cursor: pointer; box-shadow: var(--shadow);
+  transition: transform .06s ease, border-color .15s ease;
+}
+.reg-item:active { transform: scale(.97); border-color: var(--brand); }
+.reg-item.picked { border-color: var(--brand); background: var(--brand-soft); }
+.reg-item .rname { font-weight: 700; font-size: .95rem; overflow-wrap: anywhere; }
+.reg-item .rprice { font-weight: 700; color: var(--brand-dark); }
+.reg-item .rqty {
+  align-self: flex-end; background: var(--brand); color: #fff; font-size: .78rem; font-weight: 700;
+  min-width: 24px; text-align: center; padding: 0 .4em; border-radius: 12px;
+}
+
+.cart-list { display: grid; gap: .45em; margin-bottom: .8em; }
+.cart-row { display: grid; grid-template-columns: 1fr auto; gap: .3em .6em; align-items: center; padding-bottom: .45em; border-bottom: 1px dashed var(--line); }
+.cart-row .cname { font-weight: 600; font-size: .92rem; overflow-wrap: anywhere; }
+.cart-row .camount { font-weight: 700; white-space: nowrap; }
+.cart-ctl { display: flex; align-items: center; gap: .35em; grid-column: 1 / -1; }
+.stepper {
+  border: 1px solid var(--line); background: #fff; width: 34px; height: 34px; border-radius: 9px;
+  font-size: 1.1rem; line-height: 1; cursor: pointer; color: var(--ink);
+}
+.stepper:active { background: var(--brand-soft); }
+.cart-ctl .cqty { min-width: 2.2em; text-align: center; font-weight: 700; }
+.cart-ctl .cunit { font-size: .78rem; color: var(--ink-soft); margin-left: auto; }
+
+.totals { margin: .2em 0 .8em; }
+.totals div { display: flex; align-items: baseline; justify-content: space-between; padding: .25em 0; }
+.totals dt { font-size: .85rem; color: var(--ink-soft); margin: 0; }
+.totals dd { margin: 0; font-weight: 700; }
+.totals .big dt { font-size: .95rem; color: var(--ink); }
+.totals .big dd { font-size: 1.6rem; letter-spacing: -.01em; }
+.change-box { border-top: 1px solid var(--line); padding-top: .3em; }
+.change-box .big dd { color: var(--brand-dark); }
+.change-box .big dd.short { color: var(--danger); font-size: 1.1rem; }
+.received-label { margin-bottom: .5em; }
+.quick-cash { display: grid; grid-template-columns: repeat(4, 1fr); gap: .35em; margin-bottom: .6em; }
+
+/* 会計完了 */
+.overlay { position: fixed; inset: 0; z-index: 50; background: rgba(16,33,31,.55); display: grid; place-items: center; padding: 1.2em; }
+.done-card { max-width: 340px; width: 100%; text-align: center; margin: 0; }
+.done-mark { display: grid; place-items: center; width: 54px; height: 54px; margin: 0 auto .4em; border-radius: 50%; background: var(--brand); color: #fff; font-size: 1.6rem; }
+.done-list { text-align: left; margin: 1em 0; }
+.done-list div { display: flex; justify-content: space-between; padding: .3em 0; border-bottom: 1px dashed var(--line); }
+.done-list dt { color: var(--ink-soft); font-size: .85rem; margin: 0; }
+.done-list dd { margin: 0; font-weight: 700; }
+.done-list .big dd { font-size: 1.3rem; color: var(--brand-dark); }
+
+/* ---------- レポート ---------- */
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: .25em; background: #eef2f1; padding: .25em; border-radius: 11px; margin-bottom: .9em; }
+.seg-btn { border: none; background: transparent; font: inherit; font-weight: 700; min-height: 40px; border-radius: 9px; cursor: pointer; color: var(--ink-soft); }
+.seg-btn.is-on { background: #fff; color: var(--brand-dark); box-shadow: 0 1px 3px rgba(16,33,31,.12); }
+.period-controls { display: flex; flex-wrap: wrap; gap: .6em; align-items: flex-end; }
+.period-controls label { margin: 0; flex: 1 1 110px; }
+.period-controls .btn { flex: 0 0 auto; }
+.period-label { margin: .8em 0 0; font-weight: 700; }
+
+.kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .6em; margin-bottom: .8em; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: .8em; }
+.kpi span { display: block; font-size: .76rem; color: var(--ink-soft); }
+.kpi b { font-size: 1.25rem; }
+.kpi small { display: block; font-size: .74rem; color: var(--ink-soft); }
+.kpi.accent { border-color: var(--brand); background: var(--brand-soft); }
+.kpi.accent b { color: var(--brand-dark); }
+
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.table th, .table td { padding: .55em .5em; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.table th { font-size: .76rem; color: var(--ink-soft); font-weight: 700; }
+.table td:first-child, .table th:first-child { white-space: normal; min-width: 8em; }
+.table tfoot td, .table .total-row td { font-weight: 700; }
+.table td.r, .table th.r { text-align: right; }
+.table .link-row { cursor: pointer; }
+.table .link-row:active { background: var(--brand-soft); }
+
+.sales-log { display: grid; gap: .5em; }
+.log-row { border: 1px solid var(--line); border-radius: 11px; padding: .65em .8em; background: #fff; }
+.log-top { display: flex; justify-content: space-between; gap: .6em; align-items: baseline; }
+.log-no { font-size: .78rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.log-amount { font-weight: 700; }
+.log-items { font-size: .85rem; color: var(--ink-soft); overflow-wrap: anywhere; }
+
+/* ---------- トースト / ローディング ---------- */
+.toast {
+  position: fixed; left: 50%; bottom: 1.4em; transform: translate(-50%, 1.5em);
+  z-index: 80; max-width: 90vw;
+  background: #16211f; color: #fff; font-size: .9rem; font-weight: 600;
+  padding: .7em 1.1em; border-radius: 11px; box-shadow: var(--shadow);
+  opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.err { background: var(--danger); }
+
+.loading { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; background: rgba(245,247,248,.6); }
+.spinner { width: 30px; height: 30px; border: 3px solid var(--line); border-top-color: var(--brand); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- タブレット / PC ---------- */
+@media (min-width: 760px) {
+  main { padding: 1.4em 1.2em 4em; }
+  .menu-grid { grid-template-columns: repeat(3, 1fr); }
+  .kpi-grid { grid-template-columns: repeat(5, 1fr); }
+  .register { display: grid; grid-template-columns: 1fr minmax(300px, 340px); gap: 1em; align-items: start; }
+  .register-panel { position: sticky; top: 72px; }
+  .user-email { max-width: 220px; font-size: .8rem; }
+}
+@media (min-width: 1000px) {
+  .reg-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation-duration: .01ms !important; }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "kaikeipos",
+  "version": "1.0.0",
+  "private": true,
+  "description": "会員登録つきのレジアプリ（PWA / Supabase）",
+  "type": "module",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "test": "node tests/e2e.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "^26.0.0"
+  }
+}
