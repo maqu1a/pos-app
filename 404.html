@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KaikeiPOS へ移動します</title>
+<script>
+  // /pos-app/ 配下の存在しないURL（古いリンク等）に来た場合はアプリ本体へ送る。
+  // 認証リンクで付いてくる #access_token=... も引き継ぐ。
+  location.replace("/pos-app/" + (location.hash || ""));
+</script>
+<style>
+  body { font-family: -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif; padding: 2em; color: #16211f; }
+  a { color: #0f766e; }
+</style>
+</head>
+<body>
+  <p>ページが見つかりませんでした。</p>
+  <p><a href="/pos-app/">KaikeiPOS を開く</a></p>
+</body>
+</html>
