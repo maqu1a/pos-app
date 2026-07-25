@@ -416,13 +416,31 @@ await tick(40);
 ok(!$("#app-view").hidden, "再ログインできる");
 eq($("#shop-name").textContent, "カフェほろ", "再ログイン後もショップ名が出る");
 
-// ショップ名の変更
-window.prompt = () => "スタンドほろ";
-global.prompt = window.prompt;
+// ショップ名の変更（アプリ内ダイアログ。prompt は使わない）
 click("#edit-shop-btn");
+await tick();
+ok(!$("#shop-dialog").hidden, "ショップ名の入力画面が開く");
+eq($("#shop-input").value, "カフェほろ", "現在のショップ名が初期表示される");
+type("#shop-input", "");
+click("#shop-save");
+await tick();
+eq($("#shop-dialog-error").textContent, "ショップ名を入力してください", "空欄では保存しない");
+type("#shop-input", "スタンドほろ");
+click("#shop-save");
 await tick(20);
+ok($("#shop-dialog").hidden, "保存すると閉じる");
 eq($("#shop-name").textContent, "スタンドほろ", "ショップ名を変更できる");
 ok($("#dash-lead").textContent.startsWith("スタンドほろ"), "変更後のショップ名がダッシュボードにも反映");
+ok(window.document.title.includes("スタンドほろ"), "タブのタイトルも変わる");
+
+// キャンセルできる
+click("#edit-shop-btn");
+await tick();
+type("#shop-input", "捨てる名前");
+click("#shop-cancel");
+await tick();
+ok($("#shop-dialog").hidden, "キャンセルで閉じる");
+eq($("#shop-name").textContent, "スタンドほろ", "キャンセル時は変更されない");
 click('[data-goto="report"]');
 await tick(40);
 eq($("#report-period").textContent, `${today.getFullYear()}年の集計`, "再ログイン後は期間が今年に戻る");

@@ -3,7 +3,7 @@
 //  ログイン → ダッシュボード → 商品登録 / レジ / 販売レポート
 // ============================================================
 import { sb, configured, errMessage } from "./db.js";
-import { $, yen, num, toast } from "./ui.js";
+import { $, yen, num, toast, setBusy } from "./ui.js";
 import { store, loadProducts, todaySummary } from "./store.js";
 import { initAuth, resetAuthForms } from "./auth.js";
 import { initProducts, renderProducts, refreshProducts } from "./products.js";
@@ -134,20 +134,36 @@ function boot() {
   });
 
   // ショップ名の変更（登録済みアカウントでも後から設定できる）
-  $("#edit-shop-btn").addEventListener("click", async () => {
-    const current = store.user?.user_metadata?.shop_name || "";
-    const input = prompt("ショップ名を入力してください", current);
-    if (input === null) return;
-    const name = input.trim();
-    if (!name) return toast("ショップ名を入力してください", "err");
+  const shopError = (message) => {
+    const el = $("#shop-dialog-error");
+    el.textContent = message;
+    el.hidden = !message;
+  };
+  $("#edit-shop-btn").addEventListener("click", () => {
+    $("#shop-input").value = store.user?.user_metadata?.shop_name || "";
+    shopError("");
+    $("#shop-dialog").hidden = false;
+    $("#shop-input").focus();
+  });
+  $("#shop-cancel").addEventListener("click", () => {
+    $("#shop-dialog").hidden = true;
+  });
+  $("#shop-save").addEventListener("click", async () => {
+    const name = $("#shop-input").value.trim();
+    if (!name) return shopError("ショップ名を入力してください");
+    shopError("");
+    setBusy($("#shop-save"), true, "保存中…");
     try {
       const { data, error } = await sb.auth.updateUser({ data: { shop_name: name } });
       if (error) throw error;
       store.user = data.user;
       applyShopName(data.user);
+      $("#shop-dialog").hidden = true;
       toast("ショップ名を変更しました");
     } catch (err) {
-      toast(errMessage(err), "err");
+      shopError(errMessage(err));
+    } finally {
+      setBusy($("#shop-save"), false);
     }
   });
 
