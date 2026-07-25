@@ -19,6 +19,11 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
+
+/* hidden属性を必ず効かせる。
+   .loading や .overlay のように display を指定した要素は、
+   これが無いとブラウザ標準の [hidden]{display:none} に勝ってしまい消えない。 */
+[hidden] { display: none !important; }
 body {
   background: var(--bg);
   color: var(--ink);

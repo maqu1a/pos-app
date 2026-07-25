@@ -422,5 +422,27 @@ ok(!crashed, "カゴの商品が消えても画面が壊れない");
 eq($("#cart-qty").textContent, "0", "消えた商品はカゴから外れる");
 ok($("#checkout-btn").disabled, "会計ボタンは押せない状態に戻る");
 
+/* ------------------------------------------------------------
+   10. hidden属性とCSSの整合性
+   （display を指定した要素は [hidden] の上書きが無いと消えない。
+     jsdom は hidden プロパティしか見ないので、ここで明示的に確認する）
+------------------------------------------------------------ */
+console.log("\n[10] hidden属性とCSSの整合性");
+const css = readFileSync(`${APP}/style.css`, "utf8");
+const override = /\[hidden\][^{]*\{[^}]*display\s*:\s*none\s*!important/.test(css);
+ok(override, "[hidden] に display:none !important の上書きがある");
+
+const fresh = new JSDOM(readFileSync(`${APP}/index.html`, "utf8"));
+const risky = [];
+for (const el of fresh.window.document.querySelectorAll("[hidden]")) {
+  for (const cls of el.classList) {
+    // .cls { … display: … } のような指定を探す（セレクタが複数並ぶケースも許容）
+    if (new RegExp(`\\.${cls}\\b[^{}]*\\{[^}]*display\\s*:`).test(css)) {
+      risky.push(`${el.id ? "#" + el.id : el.tagName.toLowerCase()}.${cls}`);
+    }
+  }
+}
+ok(override || risky.length === 0, `display指定と衝突する要素: ${risky.join(", ") || "なし"}${risky.length && override ? "（上書きで無効化済み）" : ""}`);
+
 console.log(`\n=== ${passes} passed, ${fails} failed ===`);
 process.exit(fails ? 1 : 0);
