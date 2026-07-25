@@ -4,7 +4,7 @@
 // ============================================================
 import { sb, configured, errMessage } from "./db.js";
 import { $, yen, num, toast, setBusy, confirmDialog, initConfirmDialog } from "./ui.js";
-import { store, loadProducts, todaySummary } from "./store.js";
+import { store, loadProducts, todaySummary, deleteOwnAccount } from "./store.js";
 import { initAuth, resetAuthForms } from "./auth.js";
 import { initProducts, renderProducts, refreshProducts } from "./products.js";
 import { initRegister, enterRegister, render as renderRegister } from "./register.js";
@@ -173,6 +173,40 @@ function boot() {
       shopError(errMessage(err));
     } finally {
       setBusy($("#shop-save"), false);
+    }
+  });
+
+  // ---- 登録情報の削除（ダッシュボード下部の小さいリンク）----
+  const deleteError = (message) => {
+    const el = $("#delete-error");
+    el.textContent = message;
+    el.hidden = !message;
+  };
+  $("#open-delete-account").addEventListener("click", () => {
+    $("#delete-email").value = "";
+    deleteError("");
+    $("#delete-dialog").hidden = false;
+  });
+  $("#delete-cancel").addEventListener("click", () => {
+    $("#delete-dialog").hidden = true;
+  });
+  $("#delete-confirm").addEventListener("click", async () => {
+    const typed = $("#delete-email").value.trim().toLowerCase();
+    const mine = (store.user?.email || "").toLowerCase();
+    if (!typed) return deleteError("登録したメールアドレスを入力してください");
+    if (typed !== mine) return deleteError("メールアドレスが一致しません");
+
+    deleteError("");
+    setBusy($("#delete-confirm"), true, "削除中…");
+    try {
+      await deleteOwnAccount();
+      $("#delete-dialog").hidden = true;
+      await sb.auth.signOut({ scope: "local" });
+      toast("登録情報を削除しました");
+    } catch (err) {
+      deleteError(errMessage(err));
+    } finally {
+      setBusy($("#delete-confirm"), false);
     }
   });
 

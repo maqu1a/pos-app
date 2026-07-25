@@ -30,6 +30,8 @@ function makeMockSupabase() {
   const auth = {
     async signUp({ email, options }) {
       meta[email] = { ...(options?.data || {}) };
+      // Confirm email がONのプロジェクトを再現するモード
+      if (auth._suppressSession) return { data: { session: null, user: { id: uid(), email } }, error: null };
       user = { id: uid(), email, user_metadata: meta[email] };
       emit("SIGNED_IN");
       return { data: { session: { user } }, error: null };
@@ -115,7 +117,22 @@ function makeMockSupabase() {
     return { data: out, error: null };
   }
 
-  return { createClient: () => ({ auth, from }), _db: db, _auth: auth };
+  // RPC（delete_own_account）
+  const rpcCalls = [];
+  async function rpc(name) {
+    rpcCalls.push(name);
+    if (name !== "delete_own_account") {
+      return { data: null, error: { message: `Could not find the function public.${name}` } };
+    }
+    const me = uid();
+    db.sale_items = db.sale_items.filter((r) => r.user_id !== me);
+    db.sales = db.sales.filter((r) => r.user_id !== me);
+    db.products = db.products.filter((r) => r.user_id !== me);
+    meta[user?.email] = undefined;
+    return { data: null, error: null };
+  }
+
+  return { createClient: () => ({ auth, from, rpc }), _db: db, _auth: auth, _rpcCalls: rpcCalls };
 }
 
 /* ------------------------------------------------------------
@@ -214,6 +231,32 @@ type("#signup-password2", "abc124");
 submit("#signup-form");
 await tick();
 eq($("#signup-error").textContent, "パスワード（確認）が一致しません", "確認用パスワード不一致を検出");
+type("#signup-password2", "abc123");
+
+// メール確認が必要な設定のときは案内画面が出る（セッションを返さないモードで確認）
+mock._auth._suppressSession = true;
+type("#signup-email", "later@example.com");
+submit("#signup-form");
+await tick(20);
+ok(!$("#verify-panel").hidden, "メール確認が必要な場合は案内画面が出る");
+ok($("#verify-panel").textContent.includes("メールを開いて認証してください"), "「メールを開いて認証」の案内文");
+eq($("#verify-email").textContent, "later@example.com", "送信先アドレスを表示");
+ok($("#login-panel").hidden && $("#signup-panel").hidden, "他のパネルは隠れる");
+ok($("#to-signup").hidden, "案内中は右下のリンクを出さない");
+click("#verify-resend");
+await tick(20);
+eq(mock._auth._lastResend?.email, "later@example.com", "案内画面から再送できる");
+ok(!$("#verify-ok").hidden, "再送しましたと表示");
+click("#verify-to-login");
+await tick();
+ok(!$("#login-panel").hidden, "ログイン画面へ戻れる");
+
+// 確認不要の設定に戻して本登録
+mock._auth._suppressSession = false;
+click("#to-signup");
+type("#signup-shop", "カフェほろ");
+type("#signup-email", "shop@example.com");
+type("#signup-password", "abc123");
 type("#signup-password2", "abc123");
 submit("#signup-form");
 await tick(20);
@@ -547,6 +590,44 @@ click("#checkout-btn");
 await tick(40);
 eq($("#done-receipt").textContent, `${ymd}-010`, `最大番号+1で発番される（既存: ${remaining.join(",")} と 009）`);
 click("#done-close");
+
+/* ------------------------------------------------------------
+   9.8 登録情報の削除（最後に実行：ログアウトされる）
+------------------------------------------------------------ */
+console.log("\n[9.8] 登録情報の削除");
+click("#back-btn");
+await tick(20);
+ok($("#delete-dialog").hidden, "初期状態では削除フォームは閉じている");
+click("#open-delete-account");
+await tick();
+ok(!$("#delete-dialog").hidden, "ダッシュボードのリンクから削除フォームが開く");
+
+type("#delete-email", "");
+click("#delete-confirm");
+await tick();
+eq($("#delete-error").textContent, "登録したメールアドレスを入力してください", "未入力では削除しない");
+type("#delete-email", "other@example.com");
+click("#delete-confirm");
+await tick();
+eq($("#delete-error").textContent, "メールアドレスが一致しません", "違うアドレスでは削除しない");
+eq(mock._rpcCalls.length, 0, "この時点ではまだ削除APIを呼んでいない");
+
+click("#delete-cancel");
+await tick();
+ok($("#delete-dialog").hidden, "キャンセルで閉じる");
+ok(mock._db.products.length > 0 || mock._db.sales.length > 0, "キャンセル時はデータが残る");
+
+click("#open-delete-account");
+await tick();
+type("#delete-email", "SHOP@example.com");   // 大文字でも一致させる
+click("#delete-confirm");
+await tick(40);
+eq(mock._rpcCalls[0], "delete_own_account", "削除用の関数を呼ぶ");
+eq(mock._db.products.length, 0, "商品が全部消える");
+eq(mock._db.sales.length, 0, "売上が全部消える");
+eq(mock._db.sale_items.length, 0, "明細も全部消える");
+ok($("#delete-dialog").hidden, "削除後は閉じる");
+ok(!$("#auth-view").hidden && $("#app-view").hidden, "削除後はログイン画面に戻る");
 
 /* ------------------------------------------------------------
    10. hidden属性とCSSの整合性

@@ -22,6 +22,9 @@ export function errMessage(error) {
   if (/Email not confirmed/i.test(m)) return "メールアドレスの確認が完了していません";
   if (/Failed to fetch|NetworkError/i.test(m)) return "通信できませんでした。ネット接続を確認してください";
   if (/For security purposes|only request this after/i.test(m)) return "続けて送信できません。1分ほど待ってからもう一度お試しください";
+  if (/Could not find the function|delete_own_account.*does not exist/i.test(m)) {
+    return "削除機能の準備がまだです。Supabaseの SQL Editor で supabase/delete-account.sql を実行してください";
+  }
   return m;
 }
 

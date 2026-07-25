@@ -19,11 +19,26 @@ function showOk(id, message) {
 function showPanel(which) {
   $("#login-panel").hidden = which !== "login";
   $("#signup-panel").hidden = which !== "signup";
-  $("#to-signup").hidden = which === "signup";
+  $("#verify-panel").hidden = which !== "verify";
+  $("#to-signup").hidden = which !== "login";
   showError("#login-error", "");
   showError("#signup-error", "");
+  showError("#verify-error", "");
   $("#signup-ok").hidden = true;
   $("#login-ok").hidden = true;
+  $("#verify-ok").hidden = true;
+}
+
+// 確認メールを送り直す（送信先アドレスと表示先を指定）
+async function resend(email, button, errorId, okId) {
+  if (!email) return showError(errorId, "メールアドレスを入力してから押してください");
+  showError(errorId, "");
+  $(okId).hidden = true;
+  setBusy(button, true, "送信中…");
+  const { error } = await sb.auth.resend({ type: "signup", email });
+  setBusy(button, false);
+  if (error) return showError(errorId, errMessage(error));
+  showOk(okId, "確認メールを送り直しました。新しいメールのリンクを開いてください。");
 }
 
 export function initAuth() {
@@ -38,18 +53,13 @@ export function initAuth() {
   }
 
   // ---- 確認メールの再送 ----
-  $("#resend-btn").addEventListener("click", async () => {
-    const email = $("#login-email").value.trim();
-    $("#login-ok").hidden = true;
-    if (!email) return showError("#login-error", "メールアドレスを入力してから押してください");
-
-    showError("#login-error", "");
-    setBusy($("#resend-btn"), true, "送信中…");
-    const { error } = await sb.auth.resend({ type: "signup", email });
-    setBusy($("#resend-btn"), false);
-    if (error) return showError("#login-error", errMessage(error));
-    showOk("#login-ok", "確認メールを送り直しました。メール内のリンクを開いてください。");
-  });
+  $("#resend-btn").addEventListener("click", () =>
+    resend($("#login-email").value.trim(), $("#resend-btn"), "#login-error", "#login-ok")
+  );
+  $("#verify-resend").addEventListener("click", () =>
+    resend($("#verify-panel").dataset.email || "", $("#verify-resend"), "#verify-error", "#verify-ok")
+  );
+  $("#verify-to-login").addEventListener("click", () => showPanel("login"));
 
   // ---- ログイン ----
   $("#login-form").addEventListener("submit", async (e) => {
@@ -96,11 +106,11 @@ export function initAuth() {
       toast("アカウントを作成しました");
       return; // そのままログイン状態になる
     }
-    // メール確認が有効なプロジェクトの場合
-    const ok = $("#signup-ok");
-    ok.textContent = "確認メールを送信しました。メール内のリンクを開いたあと、ログインしてください。";
-    ok.hidden = false;
+    // メール確認が必要な設定のとき → 案内画面を出す
     $("#login-email").value = email;
+    $("#verify-panel").dataset.email = email;
+    $("#verify-email").textContent = email;
+    showPanel("verify");
   });
 }
 

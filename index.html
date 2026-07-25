@@ -78,6 +78,26 @@
       </form>
     </section>
 
+    <!-- 登録直後：メール確認の案内 -->
+    <section id="verify-panel" class="card auth-card" hidden>
+      <div class="brand">
+        <span class="brand-mark">📩</span>
+        <h1>確認メールを送りました</h1>
+        <p class="muted" id="verify-email"></p>
+      </div>
+      <p class="verify-lead">メールを開いて認証してください。認証が終わるとログインできます。</p>
+      <ol class="steps">
+        <li>メールアプリを開く（届くまで1分ほどかかることがあります）</li>
+        <li>件名「Confirm Your Signup」などのメール内の<b>リンクをタップ</b></li>
+        <li>アプリに戻って<b>ログイン</b></li>
+      </ol>
+      <p class="hint">迷惑メール／プロモーションフォルダも確認してください。<br>リンクを開いても画面が出ない場合は、下のボタンで送り直してください（古いメールのリンクは使えません）。</p>
+      <p class="form-error" id="verify-error" hidden></p>
+      <p class="form-ok" id="verify-ok" hidden></p>
+      <button type="button" class="btn primary block" id="verify-resend">確認メールを再送する</button>
+      <button type="button" class="btn ghost block" id="verify-to-login">ログイン画面へ</button>
+    </section>
+
   </div>
 
   <!-- 右下：アカウント作成へ -->
@@ -130,6 +150,9 @@
       </nav>
 
       <p class="version-line">バージョン <span id="app-version">—</span></p>
+      <p class="danger-line">
+        <button type="button" class="linklike" id="open-delete-account">登録情報を削除する</button>
+      </p>
     </section>
 
     <!-- ---------- 商品登録 ---------- -->
@@ -270,6 +293,20 @@
     </section>
 
   </main>
+
+  <!-- 登録情報の削除 -->
+  <div id="delete-dialog" class="overlay" hidden>
+    <div class="card dialog-card">
+      <h2>登録情報を削除</h2>
+      <p class="confirm-msg">アカウントと、登録した<b>商品・売上データをすべて削除</b>します。元に戻せません。</p>
+      <label>確認のため、登録したメールアドレスを入力してください
+        <input type="text" id="delete-email" inputmode="email" autocomplete="off">
+      </label>
+      <p class="form-error" id="delete-error" hidden></p>
+      <button type="button" class="btn danger block" id="delete-confirm">完全に削除する</button>
+      <button type="button" class="btn ghost block" id="delete-cancel">キャンセル</button>
+    </div>
+  </div>
 
   <!-- ショップ名の変更 -->
   <div id="shop-dialog" class="overlay" hidden>

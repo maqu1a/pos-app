@@ -165,6 +165,12 @@ export async function todaySummary() {
   };
 }
 
+// 自分のアカウントとデータを削除（supabase/delete-account.sql の関数を呼ぶ）
+export async function deleteOwnAccount() {
+  const { error } = await sb.rpc("delete_own_account");
+  if (error) throw error;
+}
+
 // 一番古い販売年（レポートの年プルダウン用）
 export async function firstSaleYear() {
   const { data, error } = await sb
