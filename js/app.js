@@ -69,6 +69,14 @@ async function refreshToday() {
 
 /* ---------------- ログイン状態の切り替え ---------------- */
 
+// ショップ名（登録時に入力したもの）を画面に反映
+function applyShopName(user) {
+  const name = (user?.user_metadata?.shop_name || "").trim() || SHOP_NAME;
+  $("#shop-name").textContent = name;
+  $("#dash-lead").textContent = `${name} — 今日の売上を確認して、レジを開きましょう。`;
+  document.title = `${name} — KaikeiPOS`;
+}
+
 async function enterApp(user) {
   if (signedIn) return;
   signedIn = true;
@@ -76,7 +84,6 @@ async function enterApp(user) {
   $("#auth-view").hidden = true;
   $("#app-view").hidden = false;
   $("#user-email").textContent = user.email || "";
-  $("#dash-lead").textContent = `${SHOP_NAME} — 今日の売上を確認して、レジを開きましょう。`;
   resetReport();   // 前のログインで見ていた期間指定を引き継がない
 
   $("#loading").hidden = false;
@@ -126,10 +133,33 @@ function boot() {
     if (signedIn) showScreen(screenFromHash());
   });
 
+  // ショップ名の変更（登録済みアカウントでも後から設定できる）
+  $("#edit-shop-btn").addEventListener("click", async () => {
+    const current = store.user?.user_metadata?.shop_name || "";
+    const input = prompt("ショップ名を入力してください", current);
+    if (input === null) return;
+    const name = input.trim();
+    if (!name) return toast("ショップ名を入力してください", "err");
+    try {
+      const { data, error } = await sb.auth.updateUser({ data: { shop_name: name } });
+      if (error) throw error;
+      store.user = data.user;
+      applyShopName(data.user);
+      toast("ショップ名を変更しました");
+    } catch (err) {
+      toast(errMessage(err), "err");
+    }
+  });
+
   // ログイン状態を監視（初回の復元もここに来る）
   sb.auth.onAuthStateChange((event, session) => {
-    if (session?.user) enterApp(session.user);
-    else leaveApp();
+    if (session?.user) {
+      store.user = session.user;
+      applyShopName(session.user);   // ログイン直後・情報更新時に反映
+      enterApp(session.user);
+    } else {
+      leaveApp();
+    }
   });
 
   // 復元されたセッションが無ければログイン画面を出す

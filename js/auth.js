@@ -70,18 +70,25 @@ export function initAuth() {
   // ---- アカウント作成 ----
   $("#signup-form").addEventListener("submit", async (e) => {
     e.preventDefault();
+    const shopName = $("#signup-shop").value.trim();
     const email = $("#signup-email").value.trim();
     const password = $("#signup-password").value;
     const password2 = $("#signup-password2").value;
     $("#signup-ok").hidden = true;
 
+    if (!shopName) return showError("#signup-error", "ショップ名を入力してください");
     if (!email) return showError("#signup-error", "メールアドレスを入力してください");
     if (password.length < 6) return showError("#signup-error", "パスワードは6文字以上にしてください");
     if (password !== password2) return showError("#signup-error", "パスワード（確認）が一致しません");
 
     showError("#signup-error", "");
     setBusy($("#signup-submit"), true, "登録中…");
-    const { data, error } = await sb.auth.signUp({ email, password });
+    // ショップ名はユーザーのメタデータに持たせる（テーブル不要）
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password,
+      options: { data: { shop_name: shopName } },
+    });
     setBusy($("#signup-submit"), false);
     if (error) return showError("#signup-error", errMessage(error));
 

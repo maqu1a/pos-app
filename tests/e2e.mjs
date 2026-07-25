@@ -26,11 +26,25 @@ function makeMockSupabase() {
   let idc = 0;
   const newId = (p) => `${p}-${++idc}`;
 
+  const meta = {};   // email -> user_metadata（登録時のショップ名など）
   const auth = {
-    async signUp({ email }) { user = { id: uid(), email }; emit("SIGNED_IN"); return { data: { session: { user } }, error: null }; },
+    async signUp({ email, options }) {
+      meta[email] = { ...(options?.data || {}) };
+      user = { id: uid(), email, user_metadata: meta[email] };
+      emit("SIGNED_IN");
+      return { data: { session: { user } }, error: null };
+    },
     async signInWithPassword({ email, password }) {
       if (password === "wrong") return { data: {}, error: { message: "Invalid login credentials" } };
-      user = { id: uid(), email }; emit("SIGNED_IN"); return { data: { session: { user } }, error: null };
+      user = { id: uid(), email, user_metadata: meta[email] || {} };
+      emit("SIGNED_IN");
+      return { data: { session: { user } }, error: null };
+    },
+    async updateUser({ data }) {
+      meta[user.email] = { ...(meta[user.email] || {}), ...data };
+      user = { ...user, user_metadata: meta[user.email] };
+      emit("USER_UPDATED");
+      return { data: { user }, error: null };
     },
     async signOut(opts) { auth._lastSignOutOpts = opts; user = null; emit("SIGNED_OUT"); return { error: null }; },
     async resend(opts) { auth._lastResend = opts; return { data: {}, error: null }; },
@@ -183,6 +197,11 @@ click("#to-signup");
 ok(!$("#signup-panel").hidden, "アカウント作成パネルへ切替");
 type("#signup-email", "shop@example.com");
 type("#signup-password", "abc123");
+type("#signup-password2", "abc123");
+submit("#signup-form");
+await tick();
+eq($("#signup-error").textContent, "ショップ名を入力してください", "ショップ名必須のバリデーション");
+type("#signup-shop", "カフェほろ");
 type("#signup-password2", "abc124");
 submit("#signup-form");
 await tick();
@@ -198,6 +217,9 @@ console.log("\n[2] ダッシュボード");
 ok($("#auth-view").hidden && !$("#app-view").hidden, "ログイン後アプリへ遷移");
 eq($("#screen-title").textContent, "ダッシュボード", "画面タイトル");
 eq($("#user-email").textContent, "shop@example.com", "ログインユーザー表示");
+eq($("#shop-name").textContent, "カフェほろ", "ヘッダーにショップ名");
+ok($("#dash-lead").textContent.startsWith("カフェほろ"), "ダッシュボードにショップ名");
+ok(window.document.title.includes("カフェほろ"), "タブのタイトルにもショップ名");
 eq($("#today-amount").textContent, "¥0", "本日の売上は0円");
 ok($("#back-btn").hidden, "ダッシュボードでは戻るボタンなし");
 
@@ -392,6 +414,15 @@ type("#login-password", "abc123");
 submit("#login-form");
 await tick(40);
 ok(!$("#app-view").hidden, "再ログインできる");
+eq($("#shop-name").textContent, "カフェほろ", "再ログイン後もショップ名が出る");
+
+// ショップ名の変更
+window.prompt = () => "スタンドほろ";
+global.prompt = window.prompt;
+click("#edit-shop-btn");
+await tick(20);
+eq($("#shop-name").textContent, "スタンドほろ", "ショップ名を変更できる");
+ok($("#dash-lead").textContent.startsWith("スタンドほろ"), "変更後のショップ名がダッシュボードにも反映");
 click('[data-goto="report"]');
 await tick(40);
 eq($("#report-period").textContent, `${today.getFullYear()}年の集計`, "再ログイン後は期間が今年に戻る");
@@ -456,6 +487,15 @@ for (const el of fresh.window.document.querySelectorAll("[hidden]")) {
   }
 }
 ok(override || risky.length === 0, `display指定と衝突する要素: ${risky.join(", ") || "なし"}${risky.length && override ? "（上書きで無効化済み）" : ""}`);
+
+/* ------------------------------------------------------------
+   11. スマホでの入力時に拡大されない設定
+------------------------------------------------------------ */
+console.log("\n[11] 入力時の自動ズーム対策");
+const inputRule = (css.match(/input\[type="text"\][^{]*\{[\s\S]*?\}/) || [""])[0];
+ok(/font-size:\s*16px/.test(inputRule), "入力欄のfont-sizeが16px（iOSの自動ズーム回避）");
+ok(!/font:\s*inherit/.test(inputRule), "font: inherit でラベルの小さい文字を継承していない");
+ok(/touch-action:\s*manipulation/.test(css), "ボタンに touch-action: manipulation（ダブルタップ拡大の抑止）");
 
 console.log(`\n=== ${passes} passed, ${fails} failed ===`);
 process.exit(fails ? 1 : 0);

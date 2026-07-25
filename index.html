@@ -59,6 +59,9 @@
         <p class="muted">商品と売上はこのアカウントに保存されます</p>
       </div>
       <form id="signup-form" novalidate>
+        <label>ショップ名 <span class="req">必須</span>
+          <input type="text" id="signup-shop" maxlength="40" placeholder="例: カフェほろ" required>
+        </label>
         <label>メールアドレス
           <input type="email" id="signup-email" autocomplete="username" inputmode="email" required>
         </label>
@@ -87,7 +90,7 @@
     <button type="button" id="back-btn" class="iconbtn" hidden aria-label="ダッシュボードに戻る">←</button>
     <h1 id="screen-title">ダッシュボード</h1>
     <div class="appbar-right">
-      <span id="user-email" class="user-email"></span>
+      <span id="shop-name" class="shop-name"></span>
       <button type="button" id="logout-btn" class="btn tiny ghost">ログアウト</button>
     </div>
   </header>
@@ -97,6 +100,10 @@
     <!-- ---------- ダッシュボード ---------- -->
     <section id="screen-dashboard" class="screen">
       <p class="lead" id="dash-lead">今日の売上をチェックしてから始めましょう。</p>
+      <p class="account-line">
+        <span id="user-email" class="user-email"></span>
+        <button type="button" class="btn tiny ghost" id="edit-shop-btn">ショップ名を変更</button>
+      </p>
 
       <div class="today-strip">
         <div class="stat"><span class="stat-label">本日の売上</span><b id="today-amount">¥0</b></div>

@@ -58,6 +58,8 @@ p { margin: 0 0 .8em; }
   transition: transform .06s ease, background .15s ease, opacity .15s ease;
 }
 .btn:active { transform: scale(.985); }
+/* ダブルタップ拡大を無効にして、連続タップを取りこぼさない */
+.btn, .menu-card, .reg-item, .stepper, .seg-btn, .iconbtn, .del-btn, .corner-link, .link-row { touch-action: manipulation; }
 .btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
 .btn.primary:active { background: var(--brand-dark); }
 .btn.ghost { background: transparent; border-color: transparent; color: var(--ink-soft); }
@@ -73,7 +75,10 @@ input[type="text"], input[type="email"], input[type="password"], input[type="dat
   margin-top: .35em;
   min-height: var(--tap);
   padding: .5em .7em;
-  font: inherit;
+  font-family: inherit;
+  /* 16px未満だと iOS がフォーカス時に勝手に拡大するため、必ず16pxを保つ
+     （ラベルの .85rem を継承させてはいけない） */
+  font-size: 16px;
   font-weight: 400;
   color: var(--ink);
   background: #fff;
@@ -145,7 +150,9 @@ code { background: #eef2f1; padding: .1em .4em; border-radius: 5px; font-size: .
 }
 .appbar h1 { margin: 0; font-size: 1.05rem; flex: 1; }
 .appbar-right { display: flex; align-items: center; gap: .5em; }
-.user-email { font-size: .75rem; color: var(--ink-soft); max-width: 32vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shop-name { font-size: .9rem; font-weight: 700; color: var(--brand-dark); max-width: 34vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-email { font-size: .75rem; color: var(--ink-soft); max-width: 55vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-line { display: flex; align-items: center; gap: .6em; margin: -.4em 0 1.1em; }
 .iconbtn {
   border: none; background: transparent; font-size: 1.3rem; line-height: 1;
   width: 40px; height: 40px; border-radius: 10px; cursor: pointer; color: var(--ink);

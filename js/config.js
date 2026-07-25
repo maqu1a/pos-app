@@ -8,5 +8,6 @@
 export const SUPABASE_URL = "https://ywblkjeficnvsvhoqlzr.supabase.co";
 export const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3YmxramVmaWNudnN2aG9xbHpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5MzQwMzIsImV4cCI6MjEwMDUxMDAzMn0.Fl_ODFfJDyr4sWcNXl5LqOK3vp-Ra_Pn7nDKeN-zxes";
 
-// 表示設定
+// ショップ名は各アカウントの登録時に入力し、アプリ内から変更できます。
+// ここは未設定アカウント用の予備表示だけに使われます。
 export const SHOP_NAME = "My Shop";
