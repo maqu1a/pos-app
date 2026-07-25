@@ -94,6 +94,13 @@ input:focus, select:focus { outline: 2px solid var(--brand); outline-offset: 1px
 
 /* ---------- 未設定案内 ---------- */
 .setup-notice { max-width: 620px; margin: 3em auto; padding: 1.4em; background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); }
+.boot-msg {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .78rem; line-height: 1.5;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+  background: #eef2f1; color: var(--ink);
+  padding: .8em; border-radius: 9px; margin: 0 0 1em;
+}
 code { background: #eef2f1; padding: .1em .4em; border-radius: 5px; font-size: .9em; }
 
 /* ---------- ログイン画面 ---------- */

@@ -11,6 +11,14 @@
 </head>
 <body>
 
+<!-- ============ 起動できなかったときの表示 ============ -->
+<div id="boot-error" class="setup-notice" hidden>
+  <h1>起動できませんでした</h1>
+  <p class="muted">下のボタンで直ることが多いです（保存済みの商品・売上は消えません）。</p>
+  <pre id="boot-error-msg" class="boot-msg"></pre>
+  <button type="button" class="btn primary block" id="boot-reset">キャッシュを消して再読み込み</button>
+</div>
+
 <!-- ============ 未設定のときの案内 ============ -->
 <div id="setup-notice" class="setup-notice" hidden>
   <h1>接続設定がまだです</h1>
@@ -256,6 +264,54 @@
 <div id="toast" class="toast"></div>
 <div id="loading" class="loading" hidden><span class="spinner"></span></div>
 
+<!-- 起動時のエラーを画面に出す（スマホでも原因が分かるように）。
+     モジュール読み込み前に登録するため、あえて通常のスクリプトで書いています。 -->
+<script>
+(function () {
+  var shown = false;
+  window.__bootErr = function (msg) {
+    if (shown) return;
+    shown = true;
+    var box = document.getElementById("boot-error");
+    if (!box) return;
+    document.getElementById("boot-error-msg").textContent = String(msg);
+    box.hidden = false;
+    var loading = document.getElementById("loading");
+    if (loading) loading.hidden = true;
+  };
+  window.addEventListener("error", function (e) {
+    if (e.target && e.target.tagName === "SCRIPT") return window.__bootErr("読み込み失敗: " + (e.target.src || ""));
+    window.__bootErr((e.message || "エラー") + "\n" + (e.filename || "") + ":" + (e.lineno || ""));
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e.reason || {};
+    window.__bootErr("通信/処理エラー: " + (r.message || r));
+  });
+  // 8秒たっても何も表示されないとき
+  setTimeout(function () {
+    var hidden = function (id) { var el = document.getElementById(id); return !el || el.hidden; };
+    if (hidden("auth-view") && hidden("app-view") && hidden("setup-notice") && hidden("boot-error")) {
+      window.__bootErr("8秒たっても画面が出ませんでした。\nJavaScriptの読み込み、またはSupabaseへの接続でつまずいています。\n・file:// で開いていませんか？（http/https が必要です）\n・機内モードや通信制限になっていませんか？");
+    }
+  }, 8000);
+  // キャッシュ・Service Worker・保存セッションを消して再読み込み
+  var reset = document.getElementById("boot-reset");
+  if (reset) reset.addEventListener("click", function () {
+    var done = function () { location.reload(); };
+    var jobs = [];
+    try {
+      if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+        jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) {
+          return Promise.all(rs.map(function (r) { return r.unregister(); }));
+        }));
+      }
+      if (window.caches) jobs.push(caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); }));
+      localStorage.clear();
+    } catch (err) { /* 消せなくても再読み込みは試す */ }
+    Promise.all(jobs).then(done, done);
+  });
+})();
+</script>
 <script src="./vendor/supabase.js"></script>
 <script type="module" src="./js/app.js"></script>
 </body>

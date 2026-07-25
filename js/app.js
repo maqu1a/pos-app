@@ -133,9 +133,16 @@ function boot() {
   });
 
   // 復元されたセッションが無ければログイン画面を出す
-  sb.auth.getSession().then(({ data }) => {
-    if (!data.session) $("#auth-view").hidden = false;
-  });
+  sb.auth
+    .getSession()
+    .then(({ data }) => {
+      if (!data.session) $("#auth-view").hidden = false;
+    })
+    .catch((err) => {
+      // 通信できないときも、せめてログイン画面は出す
+      $("#auth-view").hidden = false;
+      toast(errMessage(err), "err");
+    });
 
   // PWA（http/https で開かれたときだけ）
   if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
@@ -143,4 +150,10 @@ function boot() {
   }
 }
 
-boot();
+try {
+  boot();
+} catch (err) {
+  // 起動時の例外は画面に出す（index.html 側のハンドラ）
+  if (window.__bootErr) window.__bootErr("起動処理でエラー: " + (err?.message || err));
+  else throw err;
+}

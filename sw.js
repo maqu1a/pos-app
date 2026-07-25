@@ -1,7 +1,7 @@
 /* KaikeiPOS Service Worker
    アプリ本体（HTML/CSS/JS）はキャッシュから即表示し、裏で更新する。
    Supabase への通信（別オリジン）はキャッシュせず、常にネットワークへ。 */
-const CACHE = "kaikeipos-v1";
+const CACHE = "kaikeipos-v2";
 const ASSETS = [
   "./",
   "./index.html",
