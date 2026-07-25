@@ -285,6 +285,16 @@
   </div>
 </div>
 
+<!-- 確認ダイアログ（ブラウザ標準の confirm はPWAで無視されることがあるため自前で用意） -->
+<div id="confirm-dialog" class="overlay" hidden>
+  <div class="card dialog-card">
+    <h2 id="confirm-title">確認</h2>
+    <p id="confirm-message" class="confirm-msg"></p>
+    <button type="button" class="btn primary block" id="confirm-ok">OK</button>
+    <button type="button" class="btn ghost block" id="confirm-cancel">キャンセル</button>
+  </div>
+</div>
+
 <div id="toast" class="toast"></div>
 <div id="loading" class="loading" hidden><span class="spinner"></span></div>
 

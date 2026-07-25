@@ -55,6 +55,34 @@ export function setBusy(button, busy, busyLabel = "処理中…") {
   }
 }
 
+/* ---------- 確認ダイアログ ----------
+   ブラウザ標準の confirm() はPWAとして起動していると表示されない環境があるため、
+   アプリ内のパネルで置き換えている。await confirmDialog(...) が true/false を返す。 */
+let confirmResolve = null;
+
+export function confirmDialog({ title = "確認", message = "", okLabel = "OK", danger = false } = {}) {
+  return new Promise((resolve) => {
+    $("#confirm-title").textContent = title;
+    $("#confirm-message").textContent = message;
+    const ok = $("#confirm-ok");
+    ok.textContent = okLabel;
+    ok.classList.toggle("danger", danger);
+    $("#confirm-dialog").hidden = false;
+    confirmResolve = resolve;
+  });
+}
+
+export function initConfirmDialog() {
+  const close = (value) => {
+    $("#confirm-dialog").hidden = true;
+    const resolve = confirmResolve;
+    confirmResolve = null;
+    if (resolve) resolve(value);
+  };
+  $("#confirm-ok").addEventListener("click", () => close(true));
+  $("#confirm-cancel").addEventListener("click", () => close(false));
+}
+
 export function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }

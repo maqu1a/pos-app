@@ -1,8 +1,8 @@
 // ============================================================
 //  販売レポート 画面（年 / 月 / 日）
 // ============================================================
-import { $, yen, num, toast, localDate, lastDayOfMonth, formatDateTime, escapeHtml } from "./ui.js";
-import { fetchSales, fetchSaleItems, firstSaleYear } from "./store.js";
+import { $, yen, num, toast, localDate, lastDayOfMonth, formatDateTime, escapeHtml, confirmDialog } from "./ui.js";
+import { fetchSales, fetchSaleItems, firstSaleYear, deleteSale } from "./store.js";
 import { errMessage } from "./db.js";
 
 const MAX_LOG_ROWS = 100;   // 会計履歴の表示上限
@@ -12,6 +12,7 @@ const state = {
   mode: "year",     // year | month | day
   yearsLoaded: false,
   loading: false,
+  sales: [],        // 表示中の期間の会計（削除の確認メッセージに使う）
 };
 
 /* ---------------- 期間の計算 ---------------- */
@@ -181,7 +182,10 @@ function renderLog(sales, items) {
             return `<div class="log-row">
               <div class="log-top">
                 <span>${String(s.sold_on).replace(/-/g, "/")} <span class="log-no">${escapeHtml(s.receipt_no)}</span></span>
-                <span class="log-amount">${yen(s.total_amount)}</span>
+                <span class="log-right">
+                  <span class="log-amount">${yen(s.total_amount)}</span>
+                  <button type="button" class="del-btn" data-del-sale="${s.id}" aria-label="${escapeHtml(s.receipt_no)}を削除">🗑</button>
+                </span>
               </div>
               <div class="log-items">${names || "—"}</div>
             </div>`;
@@ -205,6 +209,7 @@ export async function loadReport() {
     const sales = await fetchSales(range.from, range.to);
     const items = await fetchSaleItems(sales.map((s) => s.id));
     const agg = aggregate(sales, items);
+    state.sales = sales;
 
     renderKpi(agg);
     renderBreakdown(sales, range);
@@ -234,6 +239,31 @@ export function initReport() {
   $("#report-month").addEventListener("change", loadReport);
   $("#report-date").addEventListener("change", loadReport);
   $("#report-reload").addEventListener("click", loadReport);
+
+  // 会計履歴から1件削除
+  $("#sales-log").addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-del-sale]");
+    if (!btn) return;
+    const id = btn.dataset.delSale;
+    const sale = state.sales.find((s) => s.id === id);
+    if (!sale) return;
+
+    const ok = await confirmDialog({
+      title: "この会計を削除しますか？",
+      message: `${sale.receipt_no}　${yen(sale.total_amount)}（${num(sale.total_qty)}点）\n売上・粗利の集計からも外れます。元に戻せません。`,
+      okLabel: "削除する",
+      danger: true,
+    });
+    if (!ok) return;
+
+    try {
+      await deleteSale(id);
+      toast("会計を削除しました");
+      await loadReport();
+    } catch (err) {
+      toast(errMessage(err), "err");
+    }
+  });
 
   // 内訳の行をタップ → 月 / 日 の詳細へ
   $("#breakdown-body").addEventListener("click", (e) => {

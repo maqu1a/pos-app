@@ -98,9 +98,14 @@ function makeMockSupabase() {
     }
     if (q._op === "delete") {
       const keep = rows.filter((r) => !match(r));
-      const removed = rows.length - keep.length;
+      const removedRows = rows.filter(match);
       db[q._table] = keep;
-      return { data: null, error: null, count: removed };
+      // sale_items の外部キー ON DELETE CASCADE を再現
+      if (q._table === "sales") {
+        const ids = removedRows.map((r) => r.id);
+        db.sale_items = db.sale_items.filter((it) => !ids.includes(it.sale_id));
+      }
+      return { data: null, error: null, count: removedRows.length };
     }
     let out = rows.filter(match);
     if (q._order) out = out.slice().sort((a, b) => (String(a[q._order.col]) > String(b[q._order.col]) ? 1 : -1) * (q._order.asc ? 1 : -1));
@@ -157,6 +162,9 @@ const type = (sel, value) => {
 };
 const submit = (sel) => $(sel).dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
 const tick = (n = 8) => new Promise((r) => setTimeout(r, n));
+// アプリ内の確認ダイアログでOK/キャンセルを押す
+const confirmOk = async () => { await tick(); click("#confirm-ok"); await tick(20); };
+const confirmCancel = async () => { await tick(); click("#confirm-cancel"); await tick(20); };
 
 const MOD = `file:///${SCRATCH}/appcopy/js`.replace(/\\/g, "/");
 await import(`${MOD}/app.js`);
@@ -395,7 +403,12 @@ await tick();
 click('[data-goto="products"]');
 await tick();
 click("#product-list [data-del]");
-await tick(20);
+await tick();
+ok(!$("#confirm-dialog").hidden, "削除前に確認ダイアログが出る");
+await confirmCancel();
+eq($("#product-count").textContent, "2", "キャンセルでは削除されない");
+click("#product-list [data-del]");
+await confirmOk();
 eq($("#product-count").textContent, "1", "一覧から1件減る");
 eq(mock._db.products.filter((p) => p.archived).length, 1, "archived = true になる（行は残る）");
 eq(mock._db.sale_items.length, 3, "過去の明細は消えない");
@@ -405,7 +418,7 @@ eq(mock._db.sale_items.length, 3, "過去の明細は消えない");
 ------------------------------------------------------------ */
 console.log("\n[8] ログアウト / 再ログイン");
 click("#logout-btn");
-await tick(20);
+await confirmOk();
 eq(mock._auth._lastSignOutOpts?.scope, "local", "ログアウトはこの端末だけ（他端末を落とさない）");
 ok(!$("#auth-view").hidden && $("#app-view").hidden, "ログイン画面に戻る");
 eq($("#login-password").value, "", "パスワード欄がクリアされる");
@@ -484,6 +497,56 @@ try { regMod.render(); } catch { crashed = true; }
 ok(!crashed, "カゴの商品が消えても画面が壊れない");
 eq($("#cart-qty").textContent, "0", "消えた商品はカゴから外れる");
 ok($("#checkout-btn").disabled, "会計ボタンは押せない状態に戻る");
+
+/* ------------------------------------------------------------
+   9.5 販売レポートから会計を削除
+------------------------------------------------------------ */
+console.log("\n[9.5] 会計履歴の削除");
+const todayISO = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+click("#back-btn");
+await tick(20);
+click('[data-goto="report"]');
+await tick(40);
+click('.seg-btn[data-mode="day"]');
+await tick(40);
+type("#report-date", todayISO);
+await tick(60);
+
+const rowsBefore = $("#sales-log").querySelectorAll(".log-row").length;
+const kpiBefore = $("#kpi-sales").textContent;
+const dbSalesBefore = mock._db.sales.length;
+const dbItemsBefore = mock._db.sale_items.length;
+ok(rowsBefore > 0, `削除前の会計履歴: ${rowsBefore}件`);
+
+click("#sales-log [data-del-sale]");
+await tick();
+ok(!$("#confirm-dialog").hidden, "削除前に確認ダイアログが出る");
+ok($("#confirm-message").textContent.includes("元に戻せません"), "取り消せない旨を明示している");
+await confirmCancel();
+eq($("#sales-log").querySelectorAll(".log-row").length, rowsBefore, "キャンセルでは消えない");
+eq(mock._db.sales.length, dbSalesBefore, "キャンセル時はDBも変わらない");
+
+click("#sales-log [data-del-sale]");
+await confirmOk();
+await tick(80);
+eq($("#sales-log").querySelectorAll(".log-row").length, rowsBefore - 1, "履歴から1件消える");
+eq(mock._db.sales.length, dbSalesBefore - 1, "DBのsalesも1件減る");
+ok(mock._db.sale_items.length < dbItemsBefore, "明細も一緒に消える（ON DELETE CASCADE）");
+ok($("#kpi-sales").textContent !== kpiBefore, `売上集計に反映される（${kpiBefore} → ${$("#kpi-sales").textContent}）`);
+
+// 削除で番号が抜けたあとも、消した番号を再利用しない
+const remaining = mock._db.sales.map((s) => s.receipt_no).sort();
+mock._db.sales.push({ id: "s-gap", user_id: "u-1", receipt_no: `${ymd}-009`, sold_at: new Date().toISOString(), sold_on: todayISO, total_qty: 1, total_amount: 100, total_cost: 0, received: 100, change_due: 0 });
+click("#back-btn");
+await tick(20);
+click('[data-goto="register"]');
+await tick(40);
+pick(1);
+await tick();
+click("#checkout-btn");
+await tick(40);
+eq($("#done-receipt").textContent, `${ymd}-010`, `最大番号+1で発番される（既存: ${remaining.join(",")} と 009）`);
+click("#done-close");
 
 /* ------------------------------------------------------------
    10. hidden属性とCSSの整合性

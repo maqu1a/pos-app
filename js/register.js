@@ -1,7 +1,7 @@
 // ============================================================
 //  レジ 画面
 // ============================================================
-import { $, yen, num, toast, parseAmount, setBusy, escapeHtml, formatDateTime } from "./ui.js";
+import { $, yen, num, toast, parseAmount, setBusy, escapeHtml, formatDateTime, confirmDialog } from "./ui.js";
 import { store, saveSale } from "./store.js";
 import { errMessage } from "./db.js";
 
@@ -147,8 +147,16 @@ export function initRegister() {
     });
   });
 
-  $("#clear-cart-btn").addEventListener("click", () => {
-    if (cart.size && !confirm("カゴの中身を全部消しますか？")) return;
+  $("#clear-cart-btn").addEventListener("click", async () => {
+    if (cart.size) {
+      const ok = await confirmDialog({
+        title: "取り消しますか？",
+        message: "入力した商品をすべて消します。",
+        okLabel: "全部消す",
+        danger: true,
+      });
+      if (!ok) return;
+    }
     clearCart();
   });
 

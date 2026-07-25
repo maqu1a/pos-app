@@ -1,7 +1,7 @@
 // ============================================================
 //  商品登録 画面
 // ============================================================
-import { $, yen, toast, parseAmount, setBusy, escapeHtml } from "./ui.js";
+import { $, yen, toast, parseAmount, setBusy, escapeHtml, confirmDialog } from "./ui.js";
 import { store, loadProducts, createProduct, archiveProduct } from "./store.js";
 import { errMessage } from "./db.js";
 
@@ -71,7 +71,13 @@ export function initProducts() {
     const id = btn.dataset.del;
     const product = store.products.find((p) => p.id === id);
     if (!product) return;
-    if (!confirm(`「${product.name}」をレジの一覧から外しますか？\n（過去の売上データは残ります）`)) return;
+    const ok = await confirmDialog({
+      title: "レジの一覧から外しますか？",
+      message: `「${product.name}」\n過去の売上データはそのまま残ります。`,
+      okLabel: "一覧から外す",
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await archiveProduct(id);
       renderProducts();

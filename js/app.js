@@ -3,7 +3,7 @@
 //  ログイン → ダッシュボード → 商品登録 / レジ / 販売レポート
 // ============================================================
 import { sb, configured, errMessage } from "./db.js";
-import { $, yen, num, toast, setBusy } from "./ui.js";
+import { $, yen, num, toast, setBusy, confirmDialog, initConfirmDialog } from "./ui.js";
 import { store, loadProducts, todaySummary } from "./store.js";
 import { initAuth, resetAuthForms } from "./auth.js";
 import { initProducts, renderProducts, refreshProducts } from "./products.js";
@@ -118,6 +118,7 @@ function boot() {
 
   $("#app-version").textContent = APP_VERSION;
 
+  initConfirmDialog();
   initAuth();
   initProducts();
   initRegister();
@@ -128,7 +129,12 @@ function boot() {
   });
   $("#back-btn").addEventListener("click", () => navigate("dashboard"));
   $("#logout-btn").addEventListener("click", async () => {
-    if (!confirm("この端末からログアウトしますか？")) return;
+    const ok = await confirmDialog({
+      title: "ログアウトしますか？",
+      message: "この端末からログアウトします。ほかの端末のログイン状態はそのままです。",
+      okLabel: "ログアウト",
+    });
+    if (!ok) return;
     // scope: "local" … 他の端末のログイン状態はそのまま（既定の global は全端末が落ちる）
     await sb.auth.signOut({ scope: "local" });
   });

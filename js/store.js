@@ -44,14 +44,18 @@ export async function archiveProduct(id) {
 
 const receiptNo = (soldOn, seq) => soldOn.replace(/-/g, "") + "-" + String(seq).padStart(3, "0");
 
-// その日の何件目かを数えて会計番号を作る
+// その日の最大番号＋1を返す（削除で番号が抜けていても衝突しない）
 async function nextSeq(soldOn) {
-  const { count, error } = await sb
+  const { data, error } = await sb
     .from("sales")
-    .select("id", { count: "exact", head: true })
-    .eq("sold_on", soldOn);
+    .select("receipt_no")
+    .eq("sold_on", soldOn)
+    .order("receipt_no", { ascending: false })
+    .limit(1);
   if (error) throw error;
-  return (count || 0) + 1;
+  if (!data || !data.length) return 1;
+  const last = parseInt(String(data[0].receipt_no).split("-")[1] || "0", 10);
+  return (Number.isNaN(last) ? 0 : last) + 1;
 }
 
 /**
@@ -137,6 +141,12 @@ export async function fetchSaleItems(saleIds) {
     all.push(...(data || []));
   }
   return all;
+}
+
+// 会計を削除（明細は sale_items の外部キー ON DELETE CASCADE で一緒に消える）
+export async function deleteSale(id) {
+  const { error } = await sb.from("sales").delete().eq("id", id);
+  if (error) throw error;
 }
 
 // ダッシュボードの「本日」
